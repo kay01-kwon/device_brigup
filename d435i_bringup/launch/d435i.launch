@@ -2,7 +2,7 @@
   <arg name="serial_no"           default=""/>
   <arg name="usb_port_id"         default=""/>
   <arg name="device_type"         default=""/>
-  <arg name="json_file_path"      default=""/>
+  <arg name="json_file_path"      default="$(find d435i_bringup)/launch/emitter_off.json"/>
   <arg name="camera"              default="camera"/>
   <arg name="tf_prefix"           default="$(arg camera)"/>
   <arg name="external_manager"    default="false"/>
@@ -20,14 +20,14 @@
 
   <arg name="confidence_width"    default="-1"/>
   <arg name="confidence_height"   default="-1"/>
-  <arg name="enable_confidence"   default="true"/>
+  <arg name="enable_confidence"   default="false"/>
   <arg name="confidence_fps"      default="-1"/>
 
-  <arg name="infra_width"         default="848"/>
+  <arg name="infra_width"         default="640"/>
   <arg name="infra_height"        default="480"/>
-  <arg name="enable_infra"        default="false"/>
-  <arg name="enable_infra1"       default="false"/>
-  <arg name="enable_infra2"       default="false"/>
+  <arg name="enable_infra"        default="true"/>
+  <arg name="enable_infra1"       default="true"/>
+  <arg name="enable_infra2"       default="true"/>
   <arg name="infra_rgb"           default="false"/>
 
   <arg name="color_width"         default="640"/>
@@ -36,8 +36,8 @@
 
   <arg name="fisheye_fps"         default="-1"/>
   <arg name="depth_fps"           default="15"/>
-  <arg name="infra_fps"           default="-1"/>
-  <arg name="color_fps"           default="30"/>
+  <arg name="infra_fps"           default="30"/>
+  <arg name="color_fps"           default="15"/>
   <arg name="gyro_fps"            default="-1"/>
   <arg name="accel_fps"           default="-1"/>
   <arg name="enable_gyro"         default="true"/>
@@ -49,7 +49,7 @@
   <arg name="allow_no_texture_points"   default="true"/>
   <arg name="ordered_pc"                default="false"/>
 
-  <arg name="enable_sync"               default="false"/>
+  <arg name="enable_sync"               default="true"/>
   <arg name="align_depth"               default="false"/>
 
   <arg name="publish_tf"                default="true"/>
