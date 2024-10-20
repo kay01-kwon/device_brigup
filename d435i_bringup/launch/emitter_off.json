@@ -1,6 +1,6 @@
 {
     "device": {
-        "fw version": "5.13.0.55",
+        "fw version": "5.12.15.50",
         "name": "Intel RealSense D435I",
         "product line": "D400"
     },
@@ -100,6 +100,6 @@
         "stream-fps": "30",
         "stream-height": "480",
         "stream-ir-format": "R8L8",
-        "stream-width": "640"
+        "stream-width": "848"
     }
 }
