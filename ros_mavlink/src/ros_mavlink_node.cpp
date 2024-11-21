@@ -15,12 +15,9 @@ int main(int argc, char** argv)
     nh.getParam("port_name", port_name);
     nh.getParam("baud_rate", baud_rate);
 
-
     SerialPort port(port_name, baud_rate);
 
     RosWrapperMavlink wrapper(nh, &port);
-
-    wrapper.ros_run();
 
     return 0;
 }
