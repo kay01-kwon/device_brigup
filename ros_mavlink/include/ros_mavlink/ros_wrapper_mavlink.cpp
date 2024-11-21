@@ -14,23 +14,10 @@ SerialPort *port)
 
     t_curr_ = ros::Time::now().toSec();
     t_prev_ = t_curr_;
+    t_cam_prev_ = t_curr_;
 
     ros_thread_ = boost::thread(&RosWrapperMavlink::ros_run_thread, this);
     mavlink_read_thread_ = boost::thread(&RosWrapperMavlink::read_IMU_message_thread, this);
-
-}
-
-RosWrapperMavlink::RosWrapperMavlink(const ros::NodeHandle &nh, 
-SerialPort *port, const int ros_rate)
-: nh_(nh), port_(port), loop_rate_(ros_rate)
-{
-    port_->start();
-
-    usleep(1000);
-
-    message_interveral_setup();
-
-    publisher_subscriber_setup();
 
 }
 
@@ -42,14 +29,17 @@ RosWrapperMavlink::~RosWrapperMavlink()
 
 void RosWrapperMavlink::ros_run_thread()
 {
+
     while(ros::ok())
     {
         t_curr_ = ros::Time::now().toSec();
 
-        if(t_curr_ - t_prev_ >= 0.010)
+        if(t_curr_ - t_prev_ >= dt_cam_/5.0)
         {
             publish_message();
+            ROS_INFO("dt_cam: %f", dt_cam_);
             t_prev_ = t_curr_;
+            imu_data_num_++;
         }
         ros::spinOnce();
     }
@@ -239,9 +229,16 @@ void RosWrapperMavlink::message_interveral_setup()
 
 void RosWrapperMavlink::camera_info_callback(const CameraInfo::ConstPtr &msg)
 {
-    t_prev_ = ros::Time::now().toSec();
+    t_curr_ = ros::Time::now().toSec();
+    
+    if(imu_data_num_ < 5)
+        publish_message();
 
-    publish_message();
+    imu_data_num_ = 0;
+
+    dt_cam_ = t_curr_ - t_cam_prev_;
+    t_cam_prev_ = t_curr_;
+    t_prev_ = t_curr_;
 }
 
 void RosWrapperMavlink::read_heart_beat(mavlink_message_t *message)

@@ -45,12 +45,6 @@ class RosWrapperMavlink
     // serial port, and default ROS rate of 100 Hz
     RosWrapperMavlink(const ros::NodeHandle &nh,SerialPort *port);
 
-
-    // Constructor for setting up the ROS node handle,
-    // serial port, message interval, and ROS rate
-    RosWrapperMavlink(const ros::NodeHandle &nh, SerialPort *port,
-    const int ros_rate);
-
     ~RosWrapperMavlink();
 
     private:
@@ -73,9 +67,12 @@ class RosWrapperMavlink
     ros::Publisher mag_pub_;
     ros::Subscriber camera_info_sub_;
 
-    ros::Rate loop_rate_{100};
-
     double t_curr_, t_prev_;
+    
+    double t_cam_prev_{0.0};
+    double dt_cam_{0.033};
+
+    int imu_data_num_{0};
     
     Imu imu_msg_;
     MagneticField mag_msg_;
