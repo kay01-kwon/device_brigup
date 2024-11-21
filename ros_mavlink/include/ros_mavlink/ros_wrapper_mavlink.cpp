@@ -16,6 +16,8 @@ SerialPort *port)
     t_prev_ = t_curr_;
     t_cam_prev_ = t_curr_;
 
+    transform_.setOrigin(tf::Vector3(0.0, 0.0, 0.0));
+
     ros_thread_ = boost::thread(&RosWrapperMavlink::ros_run_thread, this);
     mavlink_read_thread_ = boost::thread(&RosWrapperMavlink::read_IMU_message_thread, this);
 
@@ -146,6 +148,16 @@ void RosWrapperMavlink::read_IMU_message_thread()
 void RosWrapperMavlink::publish_message()
 {
     convert_ros_message();
+
+    static tf::TransformBroadcaster br;
+
+    tf::Quaternion q_tf(imu_msg_.orientation.x, imu_msg_.orientation.y,
+    imu_msg_.orientation.z, imu_msg_.orientation.w);
+
+    transform_.setRotation(q_tf);
+
+    br.sendTransform(tf::StampedTransform(transform_, ros::Time::now(), 
+    "world", "imu_link"));
 }
 
 void RosWrapperMavlink::convert_ros_message()
@@ -177,6 +189,11 @@ void RosWrapperMavlink::convert_ros_message()
         imu_msg_.angular_velocity.x = gyro_interpolated(0);
         imu_msg_.angular_velocity.y = gyro_interpolated(1);
         imu_msg_.angular_velocity.z = gyro_interpolated(2);
+
+        imu_msg_.orientation.w = quat_interpolated(0);
+        imu_msg_.orientation.x = quat_interpolated(1);
+        imu_msg_.orientation.y = quat_interpolated(2);
+        imu_msg_.orientation.z = quat_interpolated(3);
 
         imu_pub_.publish(imu_msg_);
 

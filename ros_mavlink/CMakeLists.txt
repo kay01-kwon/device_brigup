@@ -7,13 +7,14 @@ add_compile_options(-std=c++17)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
+  tf
   serial
 )
 
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES ros_mavlink
- CATKIN_DEPENDS roscpp std_msgs serial
+ CATKIN_DEPENDS roscpp std_msgs serial tf
 #  DEPENDS system_lib
 )
 

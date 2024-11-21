@@ -21,6 +21,8 @@
 
 #include <queue>
 
+#include <tf/transform_broadcaster.h>
+
 using sensor_msgs::Imu;
 using sensor_msgs::MagneticField;
 using sensor_msgs::CameraInfo;
@@ -112,6 +114,8 @@ class RosWrapperMavlink
     queue<Vector3d> gyro_queue_;
     queue<Vector3d> mag_queue_;
     queue<Vector4d> quat_queue_;
+
+    tf::Transform transform_;
     
 };
 
