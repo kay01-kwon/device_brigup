@@ -74,6 +74,8 @@ class RosWrapperMavlink
     ros::Subscriber camera_info_sub_;
 
     ros::Rate loop_rate_{100};
+
+    double t_curr_, t_prev_;
     
     Imu imu_msg_;
     MagneticField mag_msg_;
@@ -82,7 +84,9 @@ class RosWrapperMavlink
 
     void read_IMU_message_thread();
 
-    void publish_topics();
+    void publish_message();
+
+    void convert_ros_message();
 
     void publisher_subscriber_setup();
 

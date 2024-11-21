@@ -12,6 +12,9 @@ SerialPort *port)
 
     publisher_subscriber_setup();
 
+    t_curr_ = ros::Time::now().toSec();
+    t_prev_ = t_curr_;
+
     ros_thread_ = boost::thread(&RosWrapperMavlink::ros_run_thread, this);
     mavlink_read_thread_ = boost::thread(&RosWrapperMavlink::read_IMU_message_thread, this);
 
@@ -41,9 +44,14 @@ void RosWrapperMavlink::ros_run_thread()
 {
     while(ros::ok())
     {
-        publish_topics();
+        t_curr_ = ros::Time::now().toSec();
+
+        if(t_curr_ - t_prev_ >= 0.010)
+        {
+            publish_message();
+            t_prev_ = t_curr_;
+        }
         ros::spinOnce();
-        loop_rate_.sleep();
     }
 }
 
@@ -82,8 +90,7 @@ void RosWrapperMavlink::read_IMU_message_thread()
                         mag_queue_.pop();
                     }
 
-                    t_now = ros::Time::now().toSec() +
-                    ros::Time::now().toNSec() * 1e-9;
+                    t_now = ros::Time::now().toSec();
 
                     t_acc_queue_.push(t_now);
                     t_mag_queue_.push(t_now);
@@ -107,8 +114,7 @@ void RosWrapperMavlink::read_IMU_message_thread()
                 {
                     mavlink_msg_attitude_quaternion_decode(&message, &current_messages_.attitude_quaternion);
                     
-                    t_now = ros::Time::now().toSec() +
-                    ros::Time::now().toNSec() * 1e-9;
+                    t_now = ros::Time::now().toSec();
 
                     // Only keep the last two messages
                     if(t_ori_gyro_queue_.size() >= 2)
@@ -147,15 +153,19 @@ void RosWrapperMavlink::read_IMU_message_thread()
     }   // End of while(ros::ok())
 }
 
-void RosWrapperMavlink::publish_topics()
+void RosWrapperMavlink::publish_message()
+{
+    convert_ros_message();
+}
+
+void RosWrapperMavlink::convert_ros_message()
 {
     if(t_acc_queue_.size() >= 2 && t_ori_gyro_queue_.size() >= 2)
     {
         assert(t_acc_queue_.size() == 2);
         assert(t_ori_gyro_queue_.size() == 2);
 
-        double t_now = ros::Time::now().toSec() +
-        ros::Time::now().toNSec() * 1e-9;
+        double t_now = ros::Time::now().toSec();
 
         Vector3d acc_interpolated;
         Vector3d gyro_interpolated;
@@ -229,7 +239,9 @@ void RosWrapperMavlink::message_interveral_setup()
 
 void RosWrapperMavlink::camera_info_callback(const CameraInfo::ConstPtr &msg)
 {
-    camera_info_status_ = true;
+    t_prev_ = ros::Time::now().toSec();
+
+    publish_message();
 }
 
 void RosWrapperMavlink::read_heart_beat(mavlink_message_t *message)
