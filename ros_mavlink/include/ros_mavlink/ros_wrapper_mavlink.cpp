@@ -39,11 +39,20 @@ void RosWrapperMavlink::ros_run_thread()
         if(t_curr_ - t_prev_ >= dt_cam_/5.0)
         {
             publish_message();
-            ROS_INFO("dt_cam: %f", dt_cam_);
+            // ROS_INFO("dt_cam: %f", dt_cam_);
             t_prev_ = t_curr_;
             imu_data_num_++;
         }
+
+        if(imu_data_num_ >= 10)
+        {
+            imu_data_num_ = 0;
+        }
         ros::spinOnce();
+        boost::this_thread::sleep_for(
+            boost::chrono::milliseconds(1)
+        );
+        // ROS_INFO("dt: %d", time_sleep);
     }
 }
 
@@ -58,9 +67,7 @@ void RosWrapperMavlink::read_IMU_message_thread()
     while(ros::ok())
     {
         boost::lock_guard<boost::mutex> lock(mtx_);
-
         int result = port_->read_message(&message);
-
         if(result)
         {
             current_messages_.sysid = message.sysid;
@@ -70,6 +77,7 @@ void RosWrapperMavlink::read_IMU_message_thread()
             {
                 case MAVLINK_MSG_ID_HIGHRES_IMU:
                 {
+                    is_highres_imu_received_ = true;
                     mavlink_msg_highres_imu_decode(&message, 
                     &current_messages_.highres_imu);
 
@@ -104,6 +112,7 @@ void RosWrapperMavlink::read_IMU_message_thread()
 
                 case MAVLINK_MSG_ID_ATTITUDE_QUATERNION:
                 {
+                    is_attitude_quaternion_received_ = true;
                     mavlink_msg_attitude_quaternion_decode(&message, &current_messages_.attitude_quaternion);
                     
                     t_now = ros::Time::now().toSec();
@@ -140,8 +149,13 @@ void RosWrapperMavlink::read_IMU_message_thread()
 
             }   // End of switch
         }   // End of if
-
         cv_.notify_one();
+        if(is_highres_imu_received_ && is_attitude_quaternion_received_)
+        {
+            boost::this_thread::sleep_for(boost::chrono::milliseconds(1));
+            is_highres_imu_received_ = false;
+            is_attitude_quaternion_received_ = false;
+        }
     }   // End of while(ros::ok())
 }
 

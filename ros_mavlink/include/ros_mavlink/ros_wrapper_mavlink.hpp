@@ -53,7 +53,8 @@ class RosWrapperMavlink
 
     MavlinkMessages current_messages_;
 
-    bool camera_info_status_{false};
+    bool is_highres_imu_received_{false};
+    bool is_attitude_quaternion_received_{false};
 
     SerialPort *port_;
 
@@ -72,7 +73,7 @@ class RosWrapperMavlink
     double t_curr_, t_prev_;
     
     double t_cam_prev_{0.0};
-    double dt_cam_{0.033};
+    double dt_cam_{1/30.0};
 
     int imu_data_num_{0};
     
