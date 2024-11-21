@@ -10,10 +10,13 @@ int main(int argc, char** argv)
     ros::NodeHandle nh;
 
     string port_name;
+    int baud_rate;
 
     nh.getParam("port_name", port_name);
+    nh.getParam("baud_rate", baud_rate);
 
-    SerialPort port(port_name, 921600);
+
+    SerialPort port(port_name, baud_rate);
 
     RosWrapperMavlink wrapper(nh, &port);
 

@@ -2,5 +2,7 @@
   <!-- Start the simulator -->
   <node name="px4" pkg="ros_mavlink" type="ros_mavlink_node" output="screen"/>
     <param name="port_name" type="string" value="/dev/ttyACM0"/>
+    <param name="baud_rate" type="int" value="921600"/>
+    <param name="interval" type="double" value="10000.0"/>
 
 </launch>

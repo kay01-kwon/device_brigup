@@ -4,8 +4,9 @@ RosWrapperMavlink::RosWrapperMavlink(const ros::NodeHandle &nh,
                                      SerialPort *port)
 : nh_(nh), port_(port)
 {
-    current_messages_.sysid = sysid_;
-    current_messages_.compid = compid_;
+    // Message interval in micro seconds
+    float interval;
+    nh_.getParam("interval", interval);
 
     publisher_setup();
 
@@ -13,8 +14,8 @@ RosWrapperMavlink::RosWrapperMavlink(const ros::NodeHandle &nh,
 
     usleep(1000);
 
+    // Read the heartbeat message to get system and component id, resepctively
     mavlink_message_t message;
-
     read_heart_beat(&message);
 
     current_messages_.sysid = message.sysid;
@@ -23,26 +24,53 @@ RosWrapperMavlink::RosWrapperMavlink(const ros::NodeHandle &nh,
     printf("System id: %d\n", current_messages_.sysid);
     printf("Component id: %d\n", current_messages_.compid);
 
-    set_message_interval(message.sysid, message.compid,
-    MAVLINK_MSG_ID_ATTITUDE_QUATERNION, 10000.0);
+    // After getting the system and component id, set the message interval
 
+    // Set the message interval for the following messages
+    // 1. Attitude quaternion
     set_message_interval(message.sysid, message.compid,
-    MAVLINK_MSG_ID_HIGHRES_IMU, 10000.0);
+    MAVLINK_MSG_ID_ATTITUDE_QUATERNION, interval);
 
+    // 2. Highres IMU
+    set_message_interval(message.sysid, message.compid,
+    MAVLINK_MSG_ID_HIGHRES_IMU, interval);
 
 }
 
-RosWrapperMavlink::RosWrapperMavlink(const ros::NodeHandle &nh, SerialPort *port, int ros_rate)
-: nh_(nh), port_(port), reading_status_(false)
+RosWrapperMavlink::RosWrapperMavlink(const ros::NodeHandle &nh, 
+SerialPort *port, const int ros_rate)
+: nh_(nh), port_(port), loop_rate_(ros_rate)
 {
-    current_messages_.sysid = sysid_;
-    current_messages_.compid = compid_;
-
-    loop_rate_ = ros::Rate(ros_rate);
-
-    arm_disarm(true);
+    // Message interval in micro seconds
+    float interval;
+    nh_.getParam("interval", interval);
 
     publisher_setup();
+
+    port_->start();
+
+    usleep(1000);
+
+    // Read the heartbeat message to get system and component id, resepctively
+    mavlink_message_t message;
+    read_heart_beat(&message);
+
+    current_messages_.sysid = message.sysid;
+    current_messages_.compid = message.compid;
+
+    printf("System id: %d\n", current_messages_.sysid);
+    printf("Component id: %d\n", current_messages_.compid);
+
+    // After getting the system and component id, set the message interval
+
+    // Set the message interval for the following messages
+    // 1. Attitude quaternion
+    set_message_interval(message.sysid, message.compid,
+    MAVLINK_MSG_ID_ATTITUDE_QUATERNION, interval);
+
+    // 2. Highres IMU
+    set_message_interval(message.sysid, message.compid,
+    MAVLINK_MSG_ID_HIGHRES_IMU, interval);
 
 }
 
@@ -150,54 +178,12 @@ void RosWrapperMavlink::ros_run()
 
 RosWrapperMavlink::~RosWrapperMavlink()
 {
-    arm_disarm(false);
 }
 
 void RosWrapperMavlink::publisher_setup()
 {
     imu_pub_ = nh_.advertise<sensor_msgs::Imu>("/imu/data",1);
     mag_pub_ = nh_.advertise<sensor_msgs::MagneticField>("/mag/data",1);
-}
-
-int RosWrapperMavlink::arm_disarm(bool flag)
-{
-    mavlink_command_long_t com = {0};
-
-    com.target_system = sysid_;
-    com.target_component = compid_;
-    com.command = MAV_CMD_COMPONENT_ARM_DISARM;
-    com.confirmation = 0;
-    com.param1 = flag ? 1.0 : 0.1;
-    com.param2 = 0.0;
-    com.param3 = 0.0;
-    com.param4 = 0.0;
-    com.param5 = 0.0;
-    com.param6 = 0.0;
-    com.param7 = 0.0;
-
-    mavlink_message_t message;
-    mavlink_msg_command_long_encode(sysid_, compid_, &message, &com);
-
-    int len = port_->write_message(&message);
-
-    return len;
-}
-
-int RosWrapperMavlink::toggle_offboard_control(bool flag)
-{
-    mavlink_command_long_t com = {0};
-    com.target_system = sysid_;
-    com.target_component = compid_;
-    com.command = MAV_CMD_NAV_GUIDED_ENABLE;
-    com.confirmation = true;
-    com.param1 = flag ? 1.0 : 0.1;
-
-    mavlink_message_t message;
-    mavlink_msg_command_long_encode(sysid_, compid_, &message, &com);
-
-    int len = port_->write_message(&message);
-
-    return len;
 }
 
 void RosWrapperMavlink::read_heart_beat(mavlink_message_t *message)
@@ -225,7 +211,7 @@ void RosWrapperMavlink::set_message_interval(const int sysid, const int compid,
     com.param1 = message_id;
     com.param2 = dt;
 
-    mavlink_msg_command_long_encode(sysid_, compid_,
+    mavlink_msg_command_long_encode(sysid, compid,
     &message_to_write, &com);
     port_->write_message(&message_to_write);
 }
