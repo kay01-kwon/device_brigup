@@ -1,12 +1,13 @@
 {
     "python.autoComplete.extraPaths": [
-        "/home/kay/catkin_ws2/devel/lib/python3/dist-packages",
-        "/home/kay/catkin_ws/devel/lib/python3/dist-packages",
+        "/home/jetson_kay256/catkin_ws/devel/lib/python3/dist-packages",
         "/opt/ros/noetic/lib/python3/dist-packages"
     ],
     "python.analysis.extraPaths": [
-        "/home/kay/catkin_ws2/devel/lib/python3/dist-packages",
-        "/home/kay/catkin_ws/devel/lib/python3/dist-packages",
+        "/home/jetson_kay256/catkin_ws/devel/lib/python3/dist-packages",
         "/opt/ros/noetic/lib/python3/dist-packages"
-    ]
+    ],
+    "files.associations": {
+        "core": "cpp"
+    }
 }

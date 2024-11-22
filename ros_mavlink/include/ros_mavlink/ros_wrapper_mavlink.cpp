@@ -36,7 +36,7 @@ void RosWrapperMavlink::ros_run_thread()
     {
         t_curr_ = ros::Time::now().toSec();
 
-        if(t_curr_ - t_prev_ >= dt_cam_/5.0)
+        if(t_curr_ - t_prev_ >= dt_cam_/4.0)
         {
             publish_message();
             // ROS_INFO("dt_cam: %f", dt_cam_);
@@ -48,9 +48,10 @@ void RosWrapperMavlink::ros_run_thread()
         {
             imu_data_num_ = 0;
         }
+
         ros::spinOnce();
         boost::this_thread::sleep_for(
-            boost::chrono::milliseconds(1)
+            boost::chrono::milliseconds(int(dt_cam_/4.0*1000/3.0))
         );
         // ROS_INFO("dt: %d", time_sleep);
     }
@@ -67,6 +68,7 @@ void RosWrapperMavlink::read_IMU_message_thread()
     while(ros::ok())
     {
         boost::lock_guard<boost::mutex> lock(mtx_);
+        
         int result = port_->read_message(&message);
         if(result)
         {
@@ -82,23 +84,22 @@ void RosWrapperMavlink::read_IMU_message_thread()
                     &current_messages_.highres_imu);
 
                     // Only keep the last two messages
-                    if(t_acc_queue_.size() >= 2)
+                    if(t_highres_imu_queue_.size() >= 2)
                     {
-                        t_acc_queue_.pop();
-                        t_mag_queue_.pop();
+                        // ROS_INFO("Pop");
+                        t_highres_imu_queue_.pop();
                         acc_queue_.pop();
                         mag_queue_.pop();
                     }
 
                     t_now = ros::Time::now().toSec();
 
-                    t_acc_queue_.push(t_now);
-                    t_mag_queue_.push(t_now);
+                    t_highres_imu_queue_.push(t_now);
 
                     acc_queue_.push(Eigen::Vector3d(
                         current_messages_.highres_imu.xacc,
-                        current_messages_.highres_imu.yacc,
-                        current_messages_.highres_imu.zacc
+                        -(current_messages_.highres_imu.yacc),
+                        -(current_messages_.highres_imu.zacc)
                     ));
 
                     mag_queue_.push(Eigen::Vector3d(
@@ -114,18 +115,18 @@ void RosWrapperMavlink::read_IMU_message_thread()
                 {
                     is_attitude_quaternion_received_ = true;
                     mavlink_msg_attitude_quaternion_decode(&message, &current_messages_.attitude_quaternion);
-                    
-                    t_now = ros::Time::now().toSec();
 
                     // Only keep the last two messages
-                    if(t_ori_gyro_queue_.size() >= 2)
+                    if(t_attitude_quaternion_queue_.size() >= 2)
                     {
-                        t_ori_gyro_queue_.pop();
+                        t_attitude_quaternion_queue_.pop();
                         gyro_queue_.pop();
                         quat_queue_.pop();
                     }
 
-                    t_ori_gyro_queue_.push(t_now);
+                    t_now = ros::Time::now().toSec();
+
+                    t_attitude_quaternion_queue_.push(t_now);
                     
                     gyro_queue_.push(Eigen::Vector3d(
                         current_messages_.attitude_quaternion.rollspeed,
@@ -152,7 +153,7 @@ void RosWrapperMavlink::read_IMU_message_thread()
         cv_.notify_one();
         if(is_highres_imu_received_ && is_attitude_quaternion_received_)
         {
-            boost::this_thread::sleep_for(boost::chrono::milliseconds(1));
+            boost::this_thread::sleep_for(boost::chrono::milliseconds(4));
             is_highres_imu_received_ = false;
             is_attitude_quaternion_received_ = false;
         }
@@ -161,6 +162,8 @@ void RosWrapperMavlink::read_IMU_message_thread()
 
 void RosWrapperMavlink::publish_message()
 {
+    mtx_.lock();
+
     convert_ros_message();
 
     static tf::TransformBroadcaster br;
@@ -172,14 +175,17 @@ void RosWrapperMavlink::publish_message()
 
     br.sendTransform(tf::StampedTransform(transform_, ros::Time::now(), 
     "world", "imu_link"));
+
+    mtx_.unlock();
 }
 
 void RosWrapperMavlink::convert_ros_message()
 {
-    if(t_acc_queue_.size() >= 2 && t_ori_gyro_queue_.size() >= 2)
+
+    if(t_highres_imu_queue_.size() >= 2 && t_attitude_quaternion_queue_.size() >= 2)
     {
-        assert(t_acc_queue_.size() == 2);
-        assert(t_ori_gyro_queue_.size() == 2);
+        assert(t_highres_imu_queue_.size() == 2);
+        assert(t_attitude_quaternion_queue_.size() == 2);
 
         double t_now = ros::Time::now().toSec();
 
@@ -188,10 +194,10 @@ void RosWrapperMavlink::convert_ros_message()
         Vector3d mag_interpolated;
         Vector4d quat_interpolated;
 
-        linear_interpolation(t_acc_queue_, acc_queue_, t_now, acc_interpolated);
-        linear_interpolation(t_mag_queue_, mag_queue_, t_now, mag_interpolated);
-        linear_interpolation(t_ori_gyro_queue_, gyro_queue_, t_now, gyro_interpolated);
-        slerp_interpolation(t_ori_gyro_queue_, quat_queue_, t_now, quat_interpolated);
+        linear_interpolation(t_highres_imu_queue_, acc_queue_, t_now, acc_interpolated);
+        linear_interpolation(t_highres_imu_queue_, mag_queue_, t_now, mag_interpolated);
+        linear_interpolation(t_attitude_quaternion_queue_, gyro_queue_, t_now, gyro_interpolated);
+        slerp_interpolation(t_attitude_quaternion_queue_, quat_queue_, t_now, quat_interpolated);
 
         imu_msg_.header.stamp = ros::Time::now();
         imu_msg_.header.frame_id = "imu_link";
@@ -262,7 +268,7 @@ void RosWrapperMavlink::camera_info_callback(const CameraInfo::ConstPtr &msg)
 {
     t_curr_ = ros::Time::now().toSec();
     
-    if(imu_data_num_ < 5)
+    if(imu_data_num_ < 4)
         publish_message();
 
     imu_data_num_ = 0;
