@@ -31,30 +31,7 @@ RosWrapperMavlink::~RosWrapperMavlink()
 
 void RosWrapperMavlink::ros_run_thread()
 {
-
-    while(ros::ok())
-    {
-        t_curr_ = ros::Time::now().toSec();
-
-        if(t_curr_ - t_prev_ >= dt_cam_/4.0)
-        {
-            publish_message();
-            // ROS_INFO("dt_cam: %f", dt_cam_);
-            t_prev_ = t_curr_;
-            imu_data_num_++;
-        }
-
-        if(imu_data_num_ >= 10)
-        {
-            imu_data_num_ = 0;
-        }
-
-        ros::spinOnce();
-        boost::this_thread::sleep_for(
-            boost::chrono::milliseconds(1)
-        );
-        // ROS_INFO("dt: %d", time_sleep);
-    }
+    ros::spin();
 }
 
 void RosWrapperMavlink::read_IMU_message_thread()
@@ -67,7 +44,8 @@ void RosWrapperMavlink::read_IMU_message_thread()
 
     while(ros::ok())
     {
-        boost::lock_guard<boost::mutex> lock(mtx_);
+        // boost::lock_guard<boost::mutex> lock(mtx_);
+        mtx_.lock();
         
         int result = port_->read_message(&message);
         if(result)
@@ -150,10 +128,11 @@ void RosWrapperMavlink::read_IMU_message_thread()
 
             }   // End of switch
         }   // End of if
-        cv_.notify_one();
+
+        mtx_.unlock();
         if(is_highres_imu_received_ && is_attitude_quaternion_received_)
         {
-            boost::this_thread::sleep_for(boost::chrono::milliseconds(3));
+            boost::this_thread::sleep_for(boost::chrono::milliseconds(8));
             is_highres_imu_received_ = false;
             is_attitude_quaternion_received_ = false;
         }
@@ -163,24 +142,6 @@ void RosWrapperMavlink::read_IMU_message_thread()
 void RosWrapperMavlink::publish_message()
 {
     mtx_.lock();
-
-    convert_ros_message();
-
-    static tf::TransformBroadcaster br;
-
-    tf::Quaternion q_tf(imu_msg_.orientation.x, imu_msg_.orientation.y,
-    imu_msg_.orientation.z, imu_msg_.orientation.w);
-
-    transform_.setRotation(q_tf);
-
-    br.sendTransform(tf::StampedTransform(transform_, ros::Time::now(), 
-    "world", "imu_link"));
-
-    mtx_.unlock();
-}
-
-void RosWrapperMavlink::convert_ros_message()
-{
 
     if(t_highres_imu_queue_.size() >= 2 && t_attitude_quaternion_queue_.size() >= 2)
     {
@@ -226,6 +187,18 @@ void RosWrapperMavlink::convert_ros_message()
 
         mag_pub_.publish(mag_msg_);
     }
+
+    static tf::TransformBroadcaster br;
+
+    tf::Quaternion q_tf(imu_msg_.orientation.x, imu_msg_.orientation.y,
+    imu_msg_.orientation.z, imu_msg_.orientation.w);
+
+    transform_.setRotation(q_tf);
+
+    br.sendTransform(tf::StampedTransform(transform_, ros::Time::now(), 
+    "world", "imu_link"));
+
+    mtx_.unlock();
 }
 
 void RosWrapperMavlink::publisher_subscriber_setup()
@@ -267,16 +240,20 @@ void RosWrapperMavlink::message_interveral_setup()
 void RosWrapperMavlink::camera_info_callback(const CameraInfo::ConstPtr &msg)
 {
 
-    t_curr_ = ros::Time::now().toSec();
+    // t_curr_ = ros::Time::now().toSec();
 
-    if(imu_data_num_ != 5)
+    // dt_cam_ = t_curr_ - t_cam_prev_;
+    // t_cam_prev_ = t_curr_;
+    // t_prev_ = t_curr_;
+
+    for(int i = 0; i < 4; i++)
+    {
         publish_message();
+        usleep(8000);
+    }
 
-    imu_data_num_ = 1;
+    // ROS_INFO("dt_cam: %f", dt_cam_*1000.0);
 
-    dt_cam_ = t_curr_ - t_cam_prev_;
-    t_cam_prev_ = t_curr_;
-    t_prev_ = t_curr_;
 }
 
 void RosWrapperMavlink::read_heart_beat(mavlink_message_t *message)

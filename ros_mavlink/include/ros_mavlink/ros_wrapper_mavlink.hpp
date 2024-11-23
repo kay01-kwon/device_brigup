@@ -75,8 +75,6 @@ class RosWrapperMavlink
     
     double t_cam_prev_{0.0};
     double dt_cam_{1/30.0};
-
-    int imu_data_num_{0};
     
     Imu imu_msg_;
     MagneticField mag_msg_;
@@ -86,8 +84,6 @@ class RosWrapperMavlink
     void read_IMU_message_thread();
 
     void publish_message();
-
-    void convert_ros_message();
 
     void publisher_subscriber_setup();
 
