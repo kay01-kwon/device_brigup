@@ -51,7 +51,7 @@ void RosWrapperMavlink::ros_run_thread()
 
         ros::spinOnce();
         boost::this_thread::sleep_for(
-            boost::chrono::milliseconds(int(dt_cam_/4.0*1000/3.0))
+            boost::chrono::milliseconds(1)
         );
         // ROS_INFO("dt: %d", time_sleep);
     }
@@ -67,7 +67,9 @@ void RosWrapperMavlink::read_IMU_message_thread()
 
     while(ros::ok())
     {
-        boost::lock_guard<boost::mutex> lock(mtx_);
+        // boost::lock_guard<boost::mutex> lock(mtx_);
+
+        mtx_.lock();
         
         int result = port_->read_message(&message);
         if(result)
@@ -150,10 +152,10 @@ void RosWrapperMavlink::read_IMU_message_thread()
 
             }   // End of switch
         }   // End of if
-        cv_.notify_one();
+        mtx_.unlock();
         if(is_highres_imu_received_ && is_attitude_quaternion_received_)
         {
-            boost::this_thread::sleep_for(boost::chrono::milliseconds(4));
+            boost::this_thread::sleep_for(boost::chrono::milliseconds(3));
             is_highres_imu_received_ = false;
             is_attitude_quaternion_received_ = false;
         }
@@ -266,12 +268,13 @@ void RosWrapperMavlink::message_interveral_setup()
 
 void RosWrapperMavlink::camera_info_callback(const CameraInfo::ConstPtr &msg)
 {
+
     t_curr_ = ros::Time::now().toSec();
-    
-    if(imu_data_num_ < 4)
+
+    if(imu_data_num_ != 5)
         publish_message();
 
-    imu_data_num_ = 0;
+    imu_data_num_ = 1;
 
     dt_cam_ = t_curr_ - t_cam_prev_;
     t_cam_prev_ = t_curr_;
