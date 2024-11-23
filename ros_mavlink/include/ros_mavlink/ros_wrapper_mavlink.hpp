@@ -21,6 +21,7 @@
 
 #include <queue>
 
+
 #include <tf/transform_broadcaster.h>
 
 using sensor_msgs::Imu;
@@ -107,10 +108,9 @@ class RosWrapperMavlink
     const queue<Vector4d> &q_queue,
     const double t_now, Vector4d &q_interpolated);
 
-    queue<double> t_acc_queue_;
-    queue<double> t_ori_gyro_queue_;
-    queue<double> t_mag_queue_;
-    
+    queue<double> t_highres_imu_queue_;
+    queue<double> t_attitude_quaternion_queue_;
+
     queue<Vector3d> acc_queue_;
     queue<Vector3d> gyro_queue_;
     queue<Vector3d> mag_queue_;
