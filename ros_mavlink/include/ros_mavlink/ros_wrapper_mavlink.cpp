@@ -132,7 +132,15 @@ void RosWrapperMavlink::read_IMU_message_thread()
         mtx_.unlock();
         if(is_highres_imu_received_ && is_attitude_quaternion_received_)
         {
-            boost::this_thread::sleep_for(boost::chrono::milliseconds(8));
+            double t_diff = t_highres_imu_queue_.back() - t_highres_imu_queue_.front();
+            double t_diff2 = t_attitude_quaternion_queue_.back() - t_attitude_quaternion_queue_.front();
+            double t_diff_min = std::min(t_diff, t_diff2);
+
+            if(t_diff < 0.01)
+            {
+                boost::this_thread::sleep_for(boost::chrono::milliseconds((int)(t_diff_min*1000.0)));
+            }
+
             is_highres_imu_received_ = false;
             is_attitude_quaternion_received_ = false;
         }
