@@ -3,5 +3,5 @@
   <node name="px4" pkg="ros_mavlink" type="ros_mavlink_node" output="screen"/>
     <param name="port_name" type="string" value="/dev/ttyACM0"/>
     <param name="baud_rate" type="int" value="921600"/>
-    <param name="interval" type="double" value="6000.0"/>
+    <param name="interval" type="double" value="6666.0"/>
 </launch>

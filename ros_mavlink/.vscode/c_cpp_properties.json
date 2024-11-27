@@ -1,0 +1,24 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/opt/ros/noetic/include/**",
+        "/home/jetson_kay256/catkin_ws/src/VINS-Mono/camera_model/include/**",
+        "/home/jetson_kay256/catkin_ws/src/vision_opencv/cv_bridge/include/**",
+        "/home/jetson_kay256/catkin_ws/src/vision_opencv/image_geometry/include/**",
+        "/home/jetson_kay256/catkin_ws/src/device_brigup/ros_mavlink/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-arm64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}
