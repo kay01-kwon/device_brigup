@@ -39,7 +39,7 @@ plugin_blacklist:
 - setpoint_raw
 - setpoint_velocity
 - nav_controller_output
-- odom
+# - odom
 - play_tune
 - rallypoint
 - rangefinder
