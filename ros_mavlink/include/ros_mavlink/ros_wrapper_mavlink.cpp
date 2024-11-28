@@ -27,17 +27,12 @@ void RosWrapperMavlink::ros_run_mavlink()
 {
     mavlink_message_t message;
 
-    // double t_now, t_prev;
-
     ROS_INFO("Reading IMU message");
-
-    // t_now = ros::Time::now().toSec();
-    // t_prev = t_now;
 
     while(ros::ok())
     {
-        int result = port_->read_message(&message);
-        if(result)
+        // int result = port_->read_message(&message);
+        while(port_->read_message(&message))
         {
             current_messages_.sysid = message.sysid;
             current_messages_.compid = message.compid;
@@ -70,7 +65,6 @@ void RosWrapperMavlink::ros_run_mavlink()
                     imu_msg_.angular_velocity.z =
                     -(current_messages_.highres_imu.zgyro);
 
-                    imu_pub_.publish(imu_msg_);
 
                     mag_msg_.header.stamp = ros::Time::now();
                     mag_msg_.header.frame_id = "base_link";
@@ -84,6 +78,7 @@ void RosWrapperMavlink::ros_run_mavlink()
                     mag_msg_.magnetic_field.z =
                     -(current_messages_.highres_imu.zmag);
 
+                    imu_pub_.publish(imu_msg_);
                     mag_pub_.publish(mag_msg_);
 
                     break;
@@ -91,9 +86,6 @@ void RosWrapperMavlink::ros_run_mavlink()
 
                 case MAVLINK_MSG_ID_ATTITUDE_QUATERNION:
                 {
-                    // t_now = ros::Time::now().toSec();
-
-                    // ROS_INFO("Time interval: %f ms", (t_now - t_prev)*1000);
                     mavlink_msg_attitude_quaternion_decode(&message, 
                     &current_messages_.attitude_quaternion);
 
@@ -120,8 +112,6 @@ void RosWrapperMavlink::ros_run_mavlink()
 
                     br.sendTransform(tf::StampedTransform(transform_, ros::Time::now(), 
                     "world", "base_link"));
-
-                    // t_prev = t_now;
 
                     break;
                 }

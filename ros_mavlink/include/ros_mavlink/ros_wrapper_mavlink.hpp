@@ -53,7 +53,6 @@ class RosWrapperMavlink
 
     ros::Publisher imu_pub_;
     ros::Publisher mag_pub_;
-
     
     Imu imu_msg_;
     MagneticField mag_msg_;

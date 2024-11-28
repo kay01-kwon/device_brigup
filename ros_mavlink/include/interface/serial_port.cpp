@@ -20,7 +20,7 @@ int SerialPort::read_message(mavlink_message_t *message)
 
     // int result = 0;
 
-    if(serial_.available()>0)
+    if(serial_.waitReadable() == true)
     {
         serial_.read(&cp, 1);
         msgReceived = mavlink_parse_char(MAVLINK_COMM_0, 
