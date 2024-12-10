@@ -53,10 +53,6 @@ class RosWrapperMavlink
 
     ros::Publisher imu_pub_;
     ros::Publisher mag_pub_;
-
-    bool is_highres_imu_received_{false};
-    bool is_attitude_quaternion_received_{false};
-
     
     Imu imu_msg_;
     MagneticField mag_msg_;

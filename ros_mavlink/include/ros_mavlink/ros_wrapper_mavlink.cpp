@@ -44,8 +44,6 @@ void RosWrapperMavlink::ros_run_mavlink()
                     mavlink_msg_highres_imu_decode(&message, 
                     &current_messages_.highres_imu);
 
-                    is_highres_imu_received_ = true;
-
                     imu_msg_.header.stamp = ros::Time::now();
                     imu_msg_.header.frame_id = "base_link";
                     
@@ -88,13 +86,8 @@ void RosWrapperMavlink::ros_run_mavlink()
 
                 case MAVLINK_MSG_ID_ATTITUDE_QUATERNION:
                 {
-                    // t_now = ros::Time::now().toSec();
-
-                    // ROS_INFO("Time interval: %f ms", (t_now - t_prev)*1000);
                     mavlink_msg_attitude_quaternion_decode(&message, 
                     &current_messages_.attitude_quaternion);
-
-                    is_attitude_quaternion_received_ = true;
 
                     imu_msg_.orientation.w =
                     current_messages_.attitude_quaternion.q1;
@@ -120,8 +113,6 @@ void RosWrapperMavlink::ros_run_mavlink()
                     br.sendTransform(tf::StampedTransform(transform_, ros::Time::now(), 
                     "world", "base_link"));
 
-                    // t_prev = t_now;
-
                     break;
                 }
                 default:
@@ -131,14 +122,6 @@ void RosWrapperMavlink::ros_run_mavlink()
 
             }   // End of switch
         }   // End of if(result)
-
-        if(is_highres_imu_received_ && is_attitude_quaternion_received_)
-        {
-            usleep(5000);
-            is_highres_imu_received_ = false;
-            is_attitude_quaternion_received_ = false;
-        }
-
 
     }   // End of while(ros::ok())
 }
