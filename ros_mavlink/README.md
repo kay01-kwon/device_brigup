@@ -79,3 +79,32 @@ Finally, execute analysis node to generate imu.yaml file which includes the whit
 ```
 rosrun allan_variance_ros analysis.py --data ~/imu_static/imu_bag/allan_variance.csv
 ```
+
+Result of imu.yaml file.
+
+```
+#Original
+
+#Accelerometer
+accelerometer_noise_density: 0.0009995551402804774 
+accelerometer_random_walk: 2.6108694369610206e-05 
+
+#Gyroscope
+gyroscope_noise_density: 6.11871181672524e-05 
+gyroscope_random_walk: 9.059705258699343e-07 
+
+# white times five
+# walks times ten
+
+#Accelerometer
+accelerometer_noise_density: 0.004997776 
+accelerometer_random_walk: 2.6108694369610206e-04 
+
+#Gyroscope
+gyroscope_noise_density: 0.00030593559 
+gyroscope_random_walk: 9.059705258699343e-06 
+
+
+rostopic: '/mavros/imu/data_raw' #Make sure this is correct
+update_rate: 200.0 #Make sure this is correct
+```
