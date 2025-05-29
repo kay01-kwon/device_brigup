@@ -41,6 +41,12 @@ rosservice call /mavros/cmd/command "{broadcast: false, command: 511, confirmati
 rosservice call /mavros/cmd/command "{broadcast: false, command: 511, confirmation: 0, param1: 31.0, param2: 5000.0, param3: 0.0, param4: 0.0, param5: 0.0, param6: 0.0, param7: 0.0}"
 ```
 
+Check if the rate of /mavros/imu/data_raw is around 200 Hz or not.
+
+```
+rostopic hz /mavros/imu/data_raw
+```
+
 ## To record imu raw data for three hours (Allan variance ros)
 
 ```
