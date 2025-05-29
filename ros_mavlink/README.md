@@ -2,7 +2,7 @@
 
 This package modifed the launch, yaml files of MAVROS to reduce the computational load.
 
-In other words, several pluginlists has been blacklisted to reduce the computational load.
+In other words, several plugin lists has been blacklisted to reduce the computational load.
 
 ## How to launch the node
 
