@@ -50,3 +50,32 @@ rostopic hz /mavros/imu/data_raw
 ```
 rosbag record --duration=3h -O imu_static.bag /mavros/imu/data_raw
 ```
+
+## Allan variance ros
+
+```
+rosrun allan_variance_ros cookbag.py --input imu_static.bag --output imu_static_cooked.bag
+```
+
+Make a folder for imu_static_cooked.bag and then move it to the folder.
+
+Make a yaml file like the following.
+
+px6_mini.yaml
+
+```
+imu_topic: "/mavros/imu/data_raw"
+imu_rate: 200
+measure_rate: 200
+sequence_time: 10799
+```
+
+```
+rosrun allan_variance_ros allan_variance ~/imu_static/imu_bag ~/imu_static/config/px6.mini.yaml
+```
+
+Finally, execute analysis node to generate imu.yaml file which includes the white and random walk noise information.
+
+```
+rosrun allan_variance_ros analysis.py --data ~/imu_static/imu_bag/allan_variance.csv
+```
